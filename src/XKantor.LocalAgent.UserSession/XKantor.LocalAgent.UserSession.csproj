@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <RootNamespace>XKantor.LocalAgent.UserSession</RootNamespace>
+    <UseWindowsForms>true</UseWindowsForms>
+    <ApplicationIcon />
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\XKantor.LocalAgent.Core\XKantor.LocalAgent.Core.csproj" />
+    <ProjectReference Include="..\XKantor.LocalAgent.Monitors\XKantor.LocalAgent.Monitors.csproj" />
+  </ItemGroup>
+
+</Project>

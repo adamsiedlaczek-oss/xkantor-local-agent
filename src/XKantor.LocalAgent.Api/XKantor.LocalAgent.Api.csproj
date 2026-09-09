@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <RootNamespace>XKantor.LocalAgent.Api</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\XKantor.LocalAgent.Core\XKantor.LocalAgent.Core.csproj" />
+    <ProjectReference Include="..\XKantor.LocalAgent.Security\XKantor.LocalAgent.Security.csproj" />
+    <ProjectReference Include="..\XKantor.LocalAgent.Printing\XKantor.LocalAgent.Printing.csproj" />
+    <ProjectReference Include="..\XKantor.LocalAgent.Devices\XKantor.LocalAgent.Devices.csproj" />
+    <ProjectReference Include="..\XKantor.LocalAgent.Monitors\XKantor.LocalAgent.Monitors.csproj" />
+    <ProjectReference Include="..\XKantor.LocalAgent.CurrencyDisplay\XKantor.LocalAgent.CurrencyDisplay.csproj" />
+  </ItemGroup>
+
+</Project>

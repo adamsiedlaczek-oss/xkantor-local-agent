@@ -1,0 +1,16 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/XKantor.LocalAgent.Api/XKantor.LocalAgent.Api.csproj" />
+    <Project Path="src/XKantor.LocalAgent.Core/XKantor.LocalAgent.Core.csproj" />
+    <Project Path="src/XKantor.LocalAgent.CurrencyDisplay/XKantor.LocalAgent.CurrencyDisplay.csproj" />
+    <Project Path="src/XKantor.LocalAgent.Devices/XKantor.LocalAgent.Devices.csproj" />
+    <Project Path="src/XKantor.LocalAgent.Monitors/XKantor.LocalAgent.Monitors.csproj" />
+    <Project Path="src/XKantor.LocalAgent.Printing/XKantor.LocalAgent.Printing.csproj" />
+    <Project Path="src/XKantor.LocalAgent.Security/XKantor.LocalAgent.Security.csproj" />
+    <Project Path="src/XKantor.LocalAgent.Service/XKantor.LocalAgent.Service.csproj" />
+    <Project Path="src/XKantor.LocalAgent.UserSession/XKantor.LocalAgent.UserSession.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/XKantor.LocalAgent.Tests/XKantor.LocalAgent.Tests.csproj" />
+  </Folder>
+</Solution>

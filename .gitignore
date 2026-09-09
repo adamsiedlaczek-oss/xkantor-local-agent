@@ -1,0 +1,14 @@
+bin/
+obj/
+publish/
+installer/Output/
+*.user
+.vs/
+.vscode/
+*.suo
+
+# Nigdy nie commituj lokalnych danych agenta, jeśli ktoś kiedyś testuje z katalogiem projektu
+# jako ConfigPaths.RootDir (patrz Core/Configuration/ConfigPaths.cs - domyślnie %ProgramData%,
+# to tylko dodatkowa siatka bezpieczeństwa).
+XKantorLocalAgent/secure/
+*.bin

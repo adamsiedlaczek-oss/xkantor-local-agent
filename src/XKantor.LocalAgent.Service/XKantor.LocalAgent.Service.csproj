@@ -1,0 +1,29 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <RootNamespace>XKantor.LocalAgent.Service</RootNamespace>
+    <OutputType>Exe</OutputType>
+    <UserSecretsId>xkantor-local-agent-service</UserSecretsId>
+    <InvariantGlobalization>true</InvariantGlobalization>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.Hosting.WindowsServices" Version="10.0.0" />
+    <PackageReference Include="Serilog.AspNetCore" Version="9.0.0" />
+    <PackageReference Include="Serilog.Sinks.File" Version="7.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\XKantor.LocalAgent.Core\XKantor.LocalAgent.Core.csproj" />
+    <ProjectReference Include="..\XKantor.LocalAgent.Security\XKantor.LocalAgent.Security.csproj" />
+    <ProjectReference Include="..\XKantor.LocalAgent.Api\XKantor.LocalAgent.Api.csproj" />
+    <ProjectReference Include="..\XKantor.LocalAgent.Printing\XKantor.LocalAgent.Printing.csproj" />
+    <ProjectReference Include="..\XKantor.LocalAgent.Devices\XKantor.LocalAgent.Devices.csproj" />
+    <ProjectReference Include="..\XKantor.LocalAgent.Monitors\XKantor.LocalAgent.Monitors.csproj" />
+    <ProjectReference Include="..\XKantor.LocalAgent.CurrencyDisplay\XKantor.LocalAgent.CurrencyDisplay.csproj" />
+  </ItemGroup>
+
+</Project>
