@@ -36,6 +36,24 @@ public sealed class OriginValidationMiddleware
         if (context.Request.Path.StartsWithSegments("/health"))
         {
             context.Response.Headers.AccessControlAllowOrigin = "*";
+
+            // Private Network Access (PNA) - Chrome 104+ wysyła DODATKOWY preflight (nawet dla
+            // zwykłego GET) gdy strona żyjąca w "publicznej" przestrzeni adresowej (https://
+            // xkantor.app, serwer na VPS) próbuje dobić się do "lokalnej" (127.0.0.1, ten
+            // Agent) - bez Access-Control-Allow-Private-Network: true w odpowiedzi na ten
+            // preflight, fetch() rzuca "Failed to fetch" PRZED wysłaniem właściwego żądania.
+            // Odtworzone na produkcji 2026-09-16 (działa z http://localhost, nie działa z
+            // https://xkantor.app - różnica dokładnie w przestrzeni adresowej Origin).
+            if (HttpMethods.IsOptions(context.Request.Method))
+            {
+                context.Response.Headers["Access-Control-Allow-Private-Network"] = "true";
+                context.Response.Headers.AccessControlAllowMethods = "GET";
+                context.Response.Headers.AccessControlAllowHeaders = "Content-Type, Authorization";
+                context.Response.Headers["Access-Control-Max-Age"] = "600";
+                context.Response.StatusCode = StatusCodes.Status204NoContent;
+                return;
+            }
+
             await _next(context);
             return;
         }
@@ -58,8 +76,12 @@ public sealed class OriginValidationMiddleware
         // nie mapuje metody OPTIONS - bez tej krótkiej odpowiedzi tutaj przeglądarka odrzuci
         // każde żądanie z xkantor.app zanim jeszcze dotrze do handlera (404/405, bez nagłówków
         // CORS). Krótkie spięcie PRZED _next(context) - dalej i tak nie ma czego wołać.
+        // Access-Control-Allow-Private-Network - patrz komentarz w gałęzi /health wyżej, ten
+        // sam mechanizm PNA dotyczy WSZYSTKICH żądań z https://xkantor.app (publiczna
+        // przestrzeń adresowa) do tego Agenta (127.0.0.1, lokalna przestrzeń), nie tylko /health.
         if (HttpMethods.IsOptions(context.Request.Method))
         {
+            context.Response.Headers["Access-Control-Allow-Private-Network"] = "true";
             context.Response.Headers.AccessControlAllowMethods = "GET, POST";
             context.Response.Headers.AccessControlAllowHeaders = "Content-Type, Authorization";
             context.Response.Headers["Access-Control-Max-Age"] = "600";
