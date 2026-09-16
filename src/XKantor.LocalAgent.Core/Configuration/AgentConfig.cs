@@ -13,13 +13,17 @@ public sealed class AgentConfig
     public int ListenPort { get; set; } = 47311;
 
     // Origin przeglądarki dopuszczone do wywołań lokalnego API (patrz etap 2, sekcja 15).
-    // Domyślnie produkcyjna domena xkantor.app + localhost (praca developerska/testowa).
+    // Domyślnie produkcyjna domena xkantor.app + localhost (praca developerska/testowa) -
+    // port 5080 to domyślny port dev xKantor.APP (patrz Properties/launchSettings.json w
+    // E:\kantorApp, zmienione z 5050 na 5080 - zaktualizowane tutaj 2026-09-16, żeby domyślna
+    // konfiguracja Agenta od razu działała z aktualnym środowiskiem dev bez ręcznej edycji
+    // agent.json).
     public List<string> AllowedOrigins { get; set; } = new()
     {
         "https://xkantor.app",
         "https://www.xkantor.app",
-        "http://localhost:5050",
-        "https://localhost:5050"
+        "http://localhost:5080",
+        "https://localhost:5080"
     };
 
     // Moduły włączone/wyłączone przez administratora stanowiska (np. brak fizycznej

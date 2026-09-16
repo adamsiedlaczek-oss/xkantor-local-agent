@@ -25,9 +25,17 @@ public sealed class OriginValidationMiddleware
     {
         // /health celowo pomija walidację Origin - musi odpowiadać szybko i jednoznacznie
         // nawet zanim jakikolwiek Origin zostanie skonfigurowany (etap 2, sekcja 21), i nie
-        // ujawnia żadnych danych stanowiska.
+        // ujawnia żadnych danych stanowiska. WAŻNE: pominięcie walidacji NIE MOŻE oznaczać
+        // pominięcia samego nagłówka CORS - bez Access-Control-Allow-Origin przeglądarka i
+        // tak zablokuje JS-owi odczyt odpowiedzi (żądanie sieciowo przechodzi, fetch() rzuca
+        // błąd CORS) - odtworzone empirycznie: UstawieniaStrona.razor pokazywał "OFFLINE" mimo
+        // Agenta faktycznie ONLINE, bo xkantorAgentHealth() w hardwareAgent.js łapał ten błąd.
+        // Tu (w odróżnieniu od resztu endpointów) nie sprawdzamy AllowedOrigins - stąd "*"
+        // zamiast odbicia konkretnego Origin, żeby zadziałało z KAŻDEJ strony (health nie
+        // ujawnia danych stanowiska, więc to bezpieczne).
         if (context.Request.Path.StartsWithSegments("/health"))
         {
+            context.Response.Headers.AccessControlAllowOrigin = "*";
             await _next(context);
             return;
         }
@@ -43,6 +51,21 @@ public sealed class OriginValidationMiddleware
 
         context.Response.Headers.AccessControlAllowOrigin = origin;
         context.Response.Headers.Vary = "Origin";
+
+        // Preflight CORS (OPTIONS) - przeglądarka wysyła je automatycznie przed każdym
+        // fetch() z Content-Type: application/json + nagłówkiem Authorization (to NIE jest
+        // "simple request" wg specyfikacji Fetch/CORS), a żaden endpoint minimal API poniżej
+        // nie mapuje metody OPTIONS - bez tej krótkiej odpowiedzi tutaj przeglądarka odrzuci
+        // każde żądanie z xkantor.app zanim jeszcze dotrze do handlera (404/405, bez nagłówków
+        // CORS). Krótkie spięcie PRZED _next(context) - dalej i tak nie ma czego wołać.
+        if (HttpMethods.IsOptions(context.Request.Method))
+        {
+            context.Response.Headers.AccessControlAllowMethods = "GET, POST";
+            context.Response.Headers.AccessControlAllowHeaders = "Content-Type, Authorization";
+            context.Response.Headers["Access-Control-Max-Age"] = "600";
+            context.Response.StatusCode = StatusCodes.Status204NoContent;
+            return;
+        }
 
         await _next(context);
     }
