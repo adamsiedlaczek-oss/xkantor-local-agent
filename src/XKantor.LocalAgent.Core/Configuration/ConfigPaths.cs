@@ -18,6 +18,11 @@ public static class ConfigPaths
     public static string SecureDir => Path.Combine(RootDir, "secure");
     public static string LogsDir => Path.Combine(RootDir, "logs");
 
+    // Jedyny folder, w ktorym Agent zapisuje pliki na zadanie SAVE_FILE (xkantor.app, "Zapisz do
+    // pliku zamiast drukowac") - celowo JEDEN, ustalony tu, nie dowolna sciezka od wywolujacego
+    // (etap 2, sekcja 7: "nigdy polecenie/sciezka od klienta"). Patrz Api/Endpoints/SaveFileEndpoints.cs.
+    public static string FilesDir => Path.Combine(RootDir, "files");
+
     public static string AgentConfigFile => Path.Combine(ConfigDir, "agent.json");
     public static string IdentitySecureFile => Path.Combine(SecureDir, "identity.bin");
 
@@ -26,5 +31,6 @@ public static class ConfigPaths
         Directory.CreateDirectory(ConfigDir);
         Directory.CreateDirectory(SecureDir);
         Directory.CreateDirectory(LogsDir);
+        Directory.CreateDirectory(FilesDir);
     }
 }

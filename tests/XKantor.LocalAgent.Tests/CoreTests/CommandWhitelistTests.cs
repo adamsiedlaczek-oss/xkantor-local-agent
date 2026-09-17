@@ -10,7 +10,7 @@ public sealed class CommandWhitelistTests
     private static readonly string[] DozwoloneKomendy =
     {
         "GET_AGENT_STATUS", "GET_DEVICE_STATUS", "GET_MONITORS", "GET_PRINTERS",
-        "PRINT_TRANSACTION", "PRINT_DOCUMENT", "UPDATE_CURRENCY_DISPLAY"
+        "PRINT_TRANSACTION", "PRINT_DOCUMENT", "SAVE_FILE", "UPDATE_CURRENCY_DISPLAY"
     };
 
     private static readonly string[] ZakazaneWzorce =

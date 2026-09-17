@@ -53,6 +53,7 @@ public static class ApiExtensions
         app.MapStatusEndpoints();
         app.MapDeviceEndpoints();
         app.MapPrintEndpoints();
+        app.MapSaveFileEndpoints();
         app.MapCurrencyDisplayEndpoints();
         app.MapPairingEndpoints();
         app.MapIdentityEndpoints();

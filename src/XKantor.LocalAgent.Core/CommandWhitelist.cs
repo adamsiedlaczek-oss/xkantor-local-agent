@@ -15,6 +15,7 @@ public static class CommandWhitelist
         ["GET_PRINTERS"] = "Lista wykrytych drukarek (GET /api/v1/printers).",
         ["PRINT_TRANSACTION"] = "Wydruk paragonu/potwierdzenia transakcji (POST /api/v1/print/transaction).",
         ["PRINT_DOCUMENT"] = "Wydruk dokumentu ogólnego (POST /api/v1/print/document).",
+        ["SAVE_FILE"] = "Zapis gotowej treści (np. kopia paragonu/raportu do kontroli) do pliku w jedynym, ustalonym folderze na tym stanowisku (POST /api/v1/files/save).",
         ["UPDATE_CURRENCY_DISPLAY"] = "Aktualizacja lokalnego wyświetlacza kursów (POST /api/v1/currency-display/update).",
     };
 
