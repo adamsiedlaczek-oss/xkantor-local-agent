@@ -50,7 +50,7 @@ public static class PrintEndpoints
             return Results.BadRequest(new PrintResponseDto(false, $"Drukarka/port '{request.PrinterName}' nie jest obecnie wykryty(a) na tym stanowisku."));
         }
 
-        var drukarka = PrinterFactory.Utworz(request.PrinterName, request.Kind);
+        var drukarka = PrinterFactory.Utworz(request.PrinterName, request.Kind, request.PaperWidthMm);
         var wynik = await drukarka.DrukujAsync(dane, request.DocumentName);
 
         if (!wynik.CzySukces)
