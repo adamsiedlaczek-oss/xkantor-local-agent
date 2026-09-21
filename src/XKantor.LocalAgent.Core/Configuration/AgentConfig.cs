@@ -33,7 +33,8 @@ public sealed class AgentConfig
         ["Printing"] = true,
         ["Devices"] = true,
         ["Monitors"] = true,
-        ["CurrencyDisplay"] = true
+        ["CurrencyDisplay"] = true,
+        ["Board"] = true
     };
 
     public bool JestModulWlaczony(string nazwa) => !EnabledModules.TryGetValue(nazwa, out var wlaczony) || wlaczony;

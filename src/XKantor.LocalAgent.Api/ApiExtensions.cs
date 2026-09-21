@@ -2,6 +2,8 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
 using XKantor.LocalAgent.Api.Endpoints;
 using XKantor.LocalAgent.Api.Middleware;
+using XKantor.LocalAgent.Board;
+using XKantor.LocalAgent.Board.Ipc;
 using XKantor.LocalAgent.Core.Configuration;
 using XKantor.LocalAgent.Core.Modules;
 using XKantor.LocalAgent.CurrencyDisplay;
@@ -37,10 +39,15 @@ public static class ApiExtensions
         services.AddSingleton<MonitorPipeServer>();
         services.AddSingleton<CurrencyDisplayService>();
 
+        services.AddSingleton<BoardConfigStore>();
+        services.AddSingleton<BoardService>();
+        services.AddSingleton<BoardConfigPipeServer>();
+
         services.AddSingleton<IAgentModule>(sp => new PrintingModule());
         services.AddSingleton<IAgentModule>(sp => new DevicesModule(sp.GetRequiredService<DeviceDiscoveryService>()));
         services.AddSingleton<IAgentModule>(sp => sp.GetRequiredService<MonitorsModule>());
         services.AddSingleton<IAgentModule>(sp => new CurrencyDisplayModule(sp.GetRequiredService<CurrencyDisplayService>()));
+        services.AddSingleton<IAgentModule>(sp => new BoardModule(sp.GetRequiredService<BoardService>()));
         services.AddSingleton<AgentStatusService>();
 
         return services;
@@ -55,6 +62,7 @@ public static class ApiExtensions
         app.MapPrintEndpoints();
         app.MapSaveFileEndpoints();
         app.MapCurrencyDisplayEndpoints();
+        app.MapBoardEndpoints();
         app.MapPairingEndpoints();
         app.MapIdentityEndpoints();
 

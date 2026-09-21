@@ -20,13 +20,18 @@ public sealed class MonitorDiscoveryService
 {
     public IReadOnlyList<MonitorInfo> Wykryj()
     {
-        return Screen.AllScreens.Select((ekran, indeks) => new MonitorInfo(
-            Id: $"MONITOR{indeks + 1}",
-            Name: ekran.DeviceName,
-            IsPrimary: ekran.Primary,
-            WidthPx: ekran.Bounds.Width,
-            HeightPx: ekran.Bounds.Height,
-            PositionX: ekran.Bounds.X,
-            PositionY: ekran.Bounds.Y)).ToList();
+        return Screen.AllScreens.Select((ekran, indeks) =>
+        {
+            var rozpoznanie = MonitorStableIdResolver.Rozpoznaj(ekran.DeviceName, indeks);
+            return new MonitorInfo(
+                Id: rozpoznanie.StableId,
+                Name: ekran.DeviceName,
+                IsPrimary: ekran.Primary,
+                WidthPx: ekran.Bounds.Width,
+                HeightPx: ekran.Bounds.Height,
+                PositionX: ekran.Bounds.X,
+                PositionY: ekran.Bounds.Y,
+                DisplayLabel: rozpoznanie.DisplayLabel);
+        }).ToList();
     }
 }

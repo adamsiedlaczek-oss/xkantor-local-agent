@@ -26,11 +26,25 @@ public static class ConfigPaths
     public static string AgentConfigFile => Path.Combine(ConfigDir, "agent.json");
     public static string IdentitySecureFile => Path.Combine(SecureDir, "identity.bin");
 
+    // Konfiguracja tablicy kursów (kiosk na drugim monitorze) - patrz XKantor.LocalAgent.Board.
+    // Jedyny writer to Service (przez POST /api/v1/board/config); UserSession tylko czyta,
+    // przez named pipe "XKantorLocalAgent.Board", nigdy bezpośrednio z dysku (patrz
+    // Board/Ipc/BoardConfigPipeServer.cs) - spójne z tym, że cała reszta trwałej konfiguracji
+    // też ma jednego właściciela-pisarza.
+    public static string BoardConfigFile => Path.Combine(ConfigDir, "board.json");
+
+    // Osobny, trwały profil przeglądarki dla kiosku tablicy - odizolowany od normalnego profilu
+    // operatora (Edge), żeby nie mieszać historii/sesji kasjera z oknem klienta, a jednocześnie
+    // NIE incognito (trwały cache pomaga przy chwilowej utracie Internetu - patrz zadanie,
+    // sekcja 17).
+    public static string BoardProfileDir => Path.Combine(RootDir, "board-profile");
+
     public static void UpewnijSieZeFolderyIstnieja()
     {
         Directory.CreateDirectory(ConfigDir);
         Directory.CreateDirectory(SecureDir);
         Directory.CreateDirectory(LogsDir);
         Directory.CreateDirectory(FilesDir);
+        Directory.CreateDirectory(BoardProfileDir);
     }
 }

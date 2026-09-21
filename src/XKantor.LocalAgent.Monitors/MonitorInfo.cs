@@ -9,4 +9,7 @@ public sealed record MonitorInfo(
     int WidthPx,
     int HeightPx,
     int PositionX,
-    int PositionY);
+    int PositionY,
+    // Etykieta do UI (np. "Dell U2412M"), rozpoznana z EDID (patrz MonitorStableIdResolver) -
+    // null gdy się nie udało, wtedy UI pokazuje surowe Id z ostrzeżeniem.
+    string? DisplayLabel = null);

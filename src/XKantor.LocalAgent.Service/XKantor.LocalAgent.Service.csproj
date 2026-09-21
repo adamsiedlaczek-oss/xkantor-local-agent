@@ -24,6 +24,7 @@
     <ProjectReference Include="..\XKantor.LocalAgent.Devices\XKantor.LocalAgent.Devices.csproj" />
     <ProjectReference Include="..\XKantor.LocalAgent.Monitors\XKantor.LocalAgent.Monitors.csproj" />
     <ProjectReference Include="..\XKantor.LocalAgent.CurrencyDisplay\XKantor.LocalAgent.CurrencyDisplay.csproj" />
+    <ProjectReference Include="..\XKantor.LocalAgent.Board\XKantor.LocalAgent.Board.csproj" />
   </ItemGroup>
 
 </Project>

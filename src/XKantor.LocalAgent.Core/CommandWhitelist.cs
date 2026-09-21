@@ -17,6 +17,8 @@ public static class CommandWhitelist
         ["PRINT_DOCUMENT"] = "Wydruk dokumentu ogólnego (POST /api/v1/print/document).",
         ["SAVE_FILE"] = "Zapis gotowej treści (np. kopia paragonu/raportu do kontroli) do pliku w jedynym, ustalonym folderze na tym stanowisku (POST /api/v1/files/save).",
         ["UPDATE_CURRENCY_DISPLAY"] = "Aktualizacja lokalnego wyświetlacza kursów (POST /api/v1/currency-display/update).",
+        ["GET_BOARD_CONFIG"] = "Odczyt konfiguracji tablicy kursów na drugim monitorze (GET /api/v1/board/config).",
+        ["UPDATE_BOARD_CONFIG"] = "Zapis konfiguracji tablicy kursów na drugim monitorze (POST /api/v1/board/config).",
     };
 
     public static bool JestDozwolona(string komenda) => Komendy.ContainsKey(komenda);

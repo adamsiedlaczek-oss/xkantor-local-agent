@@ -49,6 +49,7 @@ try
     builder.Services.AddXKantorAgent(agentConfig, currencyDisplayConfig);
     builder.Services.AddHostedService<RenewalWatcherHostedService>();
     builder.Services.AddHostedService<MonitorPipeHostedService>();
+    builder.Services.AddHostedService<BoardConfigPipeHostedService>();
 
     var app = builder.Build();
 

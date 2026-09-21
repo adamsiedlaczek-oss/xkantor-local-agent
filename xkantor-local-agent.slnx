@@ -1,6 +1,7 @@
 <Solution>
   <Folder Name="/src/">
     <Project Path="src/XKantor.LocalAgent.Api/XKantor.LocalAgent.Api.csproj" />
+    <Project Path="src/XKantor.LocalAgent.Board/XKantor.LocalAgent.Board.csproj" />
     <Project Path="src/XKantor.LocalAgent.Core/XKantor.LocalAgent.Core.csproj" />
     <Project Path="src/XKantor.LocalAgent.CurrencyDisplay/XKantor.LocalAgent.CurrencyDisplay.csproj" />
     <Project Path="src/XKantor.LocalAgent.Devices/XKantor.LocalAgent.Devices.csproj" />

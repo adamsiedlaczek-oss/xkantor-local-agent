@@ -1,5 +1,6 @@
 using XKantor.LocalAgent.Monitors;
 using XKantor.LocalAgent.Monitors.Ipc;
+using XKantor.LocalAgent.UserSession.Board;
 
 namespace XKantor.LocalAgent.UserSession;
 
@@ -16,7 +17,10 @@ public sealed class TrayApplicationContext : ApplicationContext
     private readonly NotifyIcon _ikona;
     private readonly MonitorDiscoveryService _discovery = new();
     private readonly System.Windows.Forms.Timer _timer;
+    private readonly System.Windows.Forms.Timer _tooltipTimer;
     private readonly CancellationTokenSource _cts = new();
+    private readonly KioskSupervisor _kioskSupervisor = new();
+    private string _statusMonitorow = "inicjalizacja...";
 
     public TrayApplicationContext()
     {
@@ -37,6 +41,13 @@ public sealed class TrayApplicationContext : ApplicationContext
         _timer.Tick += async (_, _) => await RaportujAsync();
         _timer.Start();
 
+        // Tooltip NotifyIcon.Text łączy status monitorów (raportowanie co 20s, wyżej) i status
+        // tablicy kursów (KioskSupervisor, własny cykl 5s) - odświeżany częściej niż raport
+        // monitorów, żeby operator widział aktualny stan watchdoga bez czekania 20s.
+        _tooltipTimer = new System.Windows.Forms.Timer { Interval = 2000 };
+        _tooltipTimer.Tick += (_, _) => OdswiezTooltip();
+        _tooltipTimer.Start();
+
         _ = RaportujAsync();
     }
 
@@ -47,20 +58,31 @@ public sealed class TrayApplicationContext : ApplicationContext
             var monitory = _discovery.Wykryj();
             var wyslano = await MonitorPipeClient.WyslijAsync(monitory, _cts.Token);
 
-            _ikona.Text = wyslano
-                ? $"XKantor Local Agent - {monitory.Count} monitor(ów), połączono z usługą."
-                : $"XKantor Local Agent - {monitory.Count} monitor(ów), usługa niedostępna.";
+            _statusMonitorow = wyslano
+                ? $"{monitory.Count} monitor(ów), połączono z usługą."
+                : $"{monitory.Count} monitor(ów), usługa niedostępna.";
         }
         catch
         {
-            _ikona.Text = "XKantor Local Agent - błąd wykrywania monitorów.";
+            _statusMonitorow = "błąd wykrywania monitorów.";
         }
+
+        OdswiezTooltip();
+    }
+
+    private void OdswiezTooltip()
+    {
+        // NotifyIcon.Text ma twardy limit 127 znaków w WinForms - łączymy zwięźle.
+        var pelny = $"XKantor Local Agent - {_statusMonitorow}\n{_kioskSupervisor.StatusText}";
+        _ikona.Text = pelny.Length > 127 ? pelny[..127] : pelny;
     }
 
     private void ZamknijAplikacje()
     {
         _cts.Cancel();
         _timer.Stop();
+        _tooltipTimer.Stop();
+        _kioskSupervisor.Dispose();
         _ikona.Visible = false;
         ExitThread();
     }
