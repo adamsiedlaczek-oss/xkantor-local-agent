@@ -40,7 +40,7 @@ public sealed class BoardConfigPipeServer
                 var zadanie = await reader.ReadLineAsync(ct);
                 if (string.Equals(zadanie, ZapytanieGet, StringComparison.Ordinal))
                 {
-                    var json = JsonSerializer.Serialize(_service.GetConfig());
+                    var json = JsonSerializer.Serialize(_service.GetConfigs());
                     await writer.WriteLineAsync(json);
                 }
             }

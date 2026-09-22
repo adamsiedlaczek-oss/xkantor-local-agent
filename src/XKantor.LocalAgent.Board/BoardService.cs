@@ -5,38 +5,39 @@ namespace XKantor.LocalAgent.Board;
 // Warstwa logiki nad BoardConfigStore - waliduje, co przeglądarka próbuje zapisać (patrz
 // Api/Endpoints/BoardEndpoints.cs), trzyma świeży stan w pamięci (żeby GET i pipe do
 // UserSession - patrz Board/Ipc/BoardConfigPipeServer.cs - nie musiały czytać pliku za każdym
-// razem).
+// razem). Stanowisko może mieć KILKA wpisów naraz (jeden na monitor) - Upsert dodaje/aktualizuje/
+// usuwa TYLKO wpis dla jednego, wskazanego MonitorStableId, reszta listy zostaje nietknięta.
 public sealed class BoardService
 {
     private readonly BoardConfigStore _store;
     private readonly AgentConfig _agentConfig;
     private readonly object _blokada = new();
-    private BoardConfig _biezacy;
+    private List<BoardConfig> _biezace;
 
     public BoardService(BoardConfigStore store, AgentConfig agentConfig)
     {
         _store = store;
         _agentConfig = agentConfig;
-        _biezacy = _store.ZaladujLubUtworz();
+        _biezace = _store.ZaladujLubUtworz();
     }
 
-    public BoardConfig GetConfig()
+    public IReadOnlyList<BoardConfig> GetConfigs()
     {
         lock (_blokada)
         {
-            return _biezacy;
+            return _biezace;
         }
     }
 
-    public (bool CzySukces, string? Blad) Update(bool enabled, string? monitorStableId, string? monitorLabel, string? boardUrl)
+    public (bool CzySukces, string? Blad) Upsert(string monitorStableId, bool enabled, string? monitorLabel, string? boardUrl)
     {
+        if (string.IsNullOrWhiteSpace(monitorStableId))
+        {
+            return (false, "Brak wybranego monitora.");
+        }
+
         if (enabled)
         {
-            if (string.IsNullOrWhiteSpace(monitorStableId))
-            {
-                return (false, "Brak wybranego monitora.");
-            }
-
             if (string.IsNullOrWhiteSpace(boardUrl) || !Uri.TryCreate(boardUrl, UriKind.Absolute, out var uri))
             {
                 return (false, "Nieprawidłowy adres tablicy.");
@@ -50,21 +51,25 @@ public sealed class BoardService
             }
         }
 
-        var nowy = new BoardConfig
-        {
-            Enabled = enabled,
-            MonitorStableId = enabled ? monitorStableId : null,
-            MonitorLabel = enabled ? monitorLabel : null,
-            BoardUrl = enabled ? boardUrl : null,
-            ConfiguredAtUtc = DateTimeOffset.UtcNow
-        };
-
         lock (_blokada)
         {
-            _biezacy = nowy;
+            var nowa = _biezace.Where(c => c.MonitorStableId != monitorStableId).ToList();
+            if (enabled)
+            {
+                nowa.Add(new BoardConfig
+                {
+                    Enabled = true,
+                    MonitorStableId = monitorStableId,
+                    MonitorLabel = monitorLabel,
+                    BoardUrl = boardUrl,
+                    ConfiguredAtUtc = DateTimeOffset.UtcNow
+                });
+            }
+
+            _biezace = nowa;
+            _store.Zapisz(_biezace);
         }
 
-        _store.Zapisz(nowy);
         return (true, null);
     }
 

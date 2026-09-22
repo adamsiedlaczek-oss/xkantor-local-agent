@@ -16,15 +16,16 @@ public sealed class BoardModule : IAgentModule
 
     public Task<ModuleStatus> GetStatusAsync(CancellationToken ct = default)
     {
-        var config = _service.GetConfig();
-        var gotowy = config.Enabled && !string.IsNullOrWhiteSpace(config.MonitorStableId) && !string.IsNullOrWhiteSpace(config.BoardUrl);
+        var configi = _service.GetConfigs()
+            .Where(c => c.Enabled && !string.IsNullOrWhiteSpace(c.MonitorStableId) && !string.IsNullOrWhiteSpace(c.BoardUrl))
+            .ToList();
 
         return Task.FromResult(new ModuleStatus
         {
             Name = Name,
-            State = gotowy ? ModuleState.Ready : ModuleState.NotConfigured,
-            Details = gotowy
-                ? $"Tablica skonfigurowana: {config.MonitorLabel ?? config.MonitorStableId}."
+            State = configi.Count > 0 ? ModuleState.Ready : ModuleState.NotConfigured,
+            Details = configi.Count > 0
+                ? $"Tablica skonfigurowana na {configi.Count} monitor(ach): {string.Join(", ", configi.Select(c => c.MonitorLabel ?? c.MonitorStableId))}."
                 : "Tablica kursów nie jest jeszcze skonfigurowana na tym stanowisku."
         });
     }
