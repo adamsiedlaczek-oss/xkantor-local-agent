@@ -1,5 +1,3 @@
-using XKantor.LocalAgent.Core.Configuration;
-
 namespace XKantor.LocalAgent.Board;
 
 // Warstwa logiki nad BoardConfigStore - waliduje, co przeglądarka próbuje zapisać (patrz
@@ -10,14 +8,12 @@ namespace XKantor.LocalAgent.Board;
 public sealed class BoardService
 {
     private readonly BoardConfigStore _store;
-    private readonly AgentConfig _agentConfig;
     private readonly object _blokada = new();
     private List<BoardConfig> _biezace;
 
-    public BoardService(BoardConfigStore store, AgentConfig agentConfig)
+    public BoardService(BoardConfigStore store)
     {
         _store = store;
-        _agentConfig = agentConfig;
         _biezace = _store.ZaladujLubUtworz();
     }
 
@@ -38,17 +34,21 @@ public sealed class BoardService
 
         if (enabled)
         {
-            if (string.IsNullOrWhiteSpace(boardUrl) || !Uri.TryCreate(boardUrl, UriKind.Absolute, out var uri))
+            if (string.IsNullOrWhiteSpace(boardUrl) || !Uri.TryCreate(boardUrl, UriKind.Absolute, out var uri)
+                || (uri.Scheme != Uri.UriSchemeHttp && uri.Scheme != Uri.UriSchemeHttps))
             {
-                return (false, "Nieprawidłowy adres tablicy.");
+                return (false, "Nieprawidłowy adres tablicy (wymagany pełny adres http(s)://...).");
             }
 
-            // Agent nigdy nie uruchamia kiosku pod dowolny adres podany przez przeglądarkę -
-            // ten sam wzorzec zaufania co OriginValidationMiddleware (AgentConfig.AllowedOrigins).
-            if (!CzyDozwolonyOrigin(uri))
-            {
-                return (false, "Adres tablicy spoza dozwolonej listy originów tego stanowiska.");
-            }
+            // ZMIANA (zadanie "WIDOK TABLICY", sekcja 3/7 - widoki typu URL, np. YouTube): dawniej
+            // wymagaliśmy, żeby BoardUrl należał do AgentConfig.AllowedOrigins (ten sam wzorzec co
+            // OriginValidationMiddleware) - to celowo uniemożliwiało kiosk pod DOWOLNYM adresem.
+            // Teraz kantorApp ma jawny katalog "widoków" i administrator MOŻE świadomie wskazać
+            // zewnętrzny URL - to już nie przypadkowy/nieautoryzowany adres z przeglądarki, tylko
+            // intencjonalny wybór w panelu admina. Prawdziwą granicą zaufania jest sam token sesji
+            // wymagany przez ten endpoint (scope "display", RequireSessionScope w BoardEndpoints.cs)
+            // - wymaga wcześniejszego sparowania stanowiska (StationSecret), więc origin-allowlist
+            // nie dawał tu dodatkowego bezpieczeństwa, tylko blokował zamierzoną funkcję.
         }
 
         lock (_blokada)
@@ -71,11 +71,5 @@ public sealed class BoardService
         }
 
         return (true, null);
-    }
-
-    private bool CzyDozwolonyOrigin(Uri uri)
-    {
-        var origin = $"{uri.Scheme}://{uri.Authority}";
-        return _agentConfig.AllowedOrigins.Any(o => string.Equals(o.TrimEnd('/'), origin, StringComparison.OrdinalIgnoreCase));
     }
 }
