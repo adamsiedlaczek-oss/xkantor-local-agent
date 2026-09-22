@@ -10,7 +10,12 @@ using XKantor.LocalAgent.Service;
 // zbudowaniem hosta, bo decyduje m.in. o porcie Kestrela (patrz niżej).
 var configStore = new ConfigStore();
 var agentConfig = configStore.ZaladujLubUtworz();
-var currencyDisplayConfig = new CurrencyDisplayConfig(); // TODO(docs/QUESTIONS.csv #003): własny plik konfiguracyjny per-urządzenie, gdy pojawi się pierwszy prawdziwy sterownik.
+// Trwała, per-stanowiskowa konfiguracja wyświetlacza kursów (SERIAL_LINE/WYSW8_PEZET) -
+// zadanie pezet\realizacja.txt. Rejestrowana jako singleton REFERENCJA (nie kopia) - POST
+// /api/v1/currency-display/config (CurrencyDisplayEndpoints) mutuje ten sam obiekt w miejscu,
+// więc CurrencyDisplayService.ZbudujAdapter() od razu widzi nową konfigurację, bez restartu.
+var currencyDisplayConfigStore = new CurrencyDisplayConfigStore();
+var currencyDisplayConfig = currencyDisplayConfigStore.ZaladujLubUtworz();
 
 ConfigPaths.UpewnijSieZeFolderyIstnieja();
 
@@ -46,7 +51,7 @@ try
         kestrel.Listen(IPAddress.Loopback, agentConfig.ListenPort);
     });
 
-    builder.Services.AddXKantorAgent(agentConfig, currencyDisplayConfig);
+    builder.Services.AddXKantorAgent(agentConfig, currencyDisplayConfig, currencyDisplayConfigStore);
     builder.Services.AddHostedService<RenewalWatcherHostedService>();
     builder.Services.AddHostedService<MonitorPipeHostedService>();
     builder.Services.AddHostedService<BoardConfigPipeHostedService>();

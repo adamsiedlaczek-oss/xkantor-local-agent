@@ -20,10 +20,11 @@ namespace XKantor.LocalAgent.Api;
 // bez duplikowania rejestracji.
 public static class ApiExtensions
 {
-    public static IServiceCollection AddXKantorAgent(this IServiceCollection services, AgentConfig config, CurrencyDisplayConfig currencyDisplayConfig)
+    public static IServiceCollection AddXKantorAgent(this IServiceCollection services, AgentConfig config, CurrencyDisplayConfig currencyDisplayConfig, CurrencyDisplayConfigStore currencyDisplayConfigStore)
     {
         services.AddSingleton(config);
         services.AddSingleton(currencyDisplayConfig);
+        services.AddSingleton(currencyDisplayConfigStore);
         services.AddSingleton<RenewalPolicy>();
 
         services.AddSingleton<IdentityStore>();

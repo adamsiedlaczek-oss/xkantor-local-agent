@@ -33,6 +33,11 @@ public static class ConfigPaths
     // też ma jednego właściciela-pisarza.
     public static string BoardConfigFile => Path.Combine(ConfigDir, "board.json");
 
+    // Konfiguracja fizycznego wyświetlacza kursów (SERIAL_LINE/WYSW8_PEZET) - patrz
+    // XKantor.LocalAgent.CurrencyDisplay.CurrencyDisplayConfigStore. Ten sam wzorzec co
+    // board.json wyżej - jeden właściciel-pisarz (Service, przez POST /api/v1/currency-display/config).
+    public static string CurrencyDisplayConfigFile => Path.Combine(ConfigDir, "currency-display.json");
+
     // Osobny, trwały profil przeglądarki dla kiosku tablicy - odizolowany od normalnego profilu
     // operatora (Edge), żeby nie mieszać historii/sesji kasjera z oknem klienta, a jednocześnie
     // NIE incognito (trwały cache pomaga przy chwilowej utracie Internetu - patrz zadanie,

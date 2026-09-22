@@ -17,6 +17,14 @@
   </ItemGroup>
 
   <ItemGroup>
+    <!-- Sterownik PEZET (wysw8.exe + WYSW8.DLL, zadanie pezet\realizacja.txt) - kopiowany obok
+         zbudowanego .exe zarówno przy 'dotnet run'/F5 (dev) jak i 'dotnet publish' (instalator,
+         patrz installer\XKantorLocalAgent.iss), żeby Wysw8PezetAdapter
+         (AppContext.BaseDirectory\pezet\wysw8.exe) zawsze go znalazł bez ręcznego kopiowania. -->
+    <None Include="..\..\assets\pezet\**" CopyToOutputDirectory="PreserveNewest" LinkBase="pezet" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\XKantor.LocalAgent.Core\XKantor.LocalAgent.Core.csproj" />
     <ProjectReference Include="..\XKantor.LocalAgent.Security\XKantor.LocalAgent.Security.csproj" />
     <ProjectReference Include="..\XKantor.LocalAgent.Api\XKantor.LocalAgent.Api.csproj" />

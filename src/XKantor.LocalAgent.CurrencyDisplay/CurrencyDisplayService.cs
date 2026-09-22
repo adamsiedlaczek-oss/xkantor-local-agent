@@ -15,6 +15,7 @@ public sealed class CurrencyDisplayService
     public ICurrencyDisplayAdapter ZbudujAdapter() => _config.AdapterType switch
     {
         "SERIAL_LINE" when !string.IsNullOrWhiteSpace(_config.Port) => new SerialLineAdapter(_config.Port, _config.BaudRate),
+        "WYSW8_PEZET" when !string.IsNullOrWhiteSpace(_config.Port) => new Wysw8PezetAdapter(_config.Port),
         _ => new NotConfiguredAdapter()
     };
 
