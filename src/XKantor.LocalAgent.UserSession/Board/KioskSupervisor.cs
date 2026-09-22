@@ -28,6 +28,13 @@ public sealed class KioskSupervisor : IDisposable
         public int KolejnaProbaBackoff;
         public DateTime? NastepnaProbaUtc;
         public string StatusText = "";
+
+        // Użytkownik sam zamknął okno kiosku (Alt+F4 - normalne zamknięcie, exit code 0) -
+        // odróżniamy to od crasha (kod <> 0), żeby NIE odpalać watchdoga: świadome zamknięcie ma
+        // zostać zamknięte, dopóki admin nie zmieni konfiguracji tego monitora (inny widok/
+        // rotacja/włącz-wyłącz - patrz OstatniBoardUrl) albo nie zrestartuje Agenta/usługi.
+        public bool ZamknietyRecznie;
+        public string? OstatniBoardUrl;
     }
 
     private readonly MonitorDiscoveryService _monitorDiscovery = new();
@@ -135,13 +142,28 @@ public sealed class KioskSupervisor : IDisposable
             _instancje[config.MonitorStableId!] = instancja;
         }
 
+        // Config tego monitora się zmienił (inny widok/rotacja/włączono ponownie) od czasu
+        // ręcznego zamknięcia - to jednoznaczna decyzja admina, więc wznawiamy auto-uruchamianie.
+        if (instancja.ZamknietyRecznie && !string.Equals(instancja.OstatniBoardUrl, config.BoardUrl, StringComparison.Ordinal))
+        {
+            instancja.ZamknietyRecznie = false;
+        }
+
+        if (instancja.ZamknietyRecznie)
+        {
+            instancja.StatusText = $"zamknięta ręcznie na {monitor.DisplayLabel ?? monitor.Id} (zmień konfigurację, żeby wznowić)";
+            return;
+        }
+
         if (instancja.Proces is not null)
         {
             bool zakonczony;
+            int? kodWyjscia = null;
             try
             {
                 instancja.Proces.Refresh();
                 zakonczony = instancja.Proces.HasExited;
+                if (zakonczony) kodWyjscia = instancja.Proces.ExitCode;
             }
             catch
             {
@@ -159,9 +181,21 @@ public sealed class KioskSupervisor : IDisposable
                 return;
             }
 
-            Log.Information("Board: proces kiosku na {MonitorId} zakończył się nieoczekiwanie - watchdog zaplanuje restart.", monitor.Id);
             instancja.Proces = null;
             instancja.ProcesUruchomionyUtc = null;
+
+            // Exit code 0 = normalne zamknięcie okna (Alt+F4) - operator/kasjer świadomie zamknął
+            // tablicę, więc NIE traktujemy tego jak crash. Każdy inny kod = crash/zabity proces -
+            // dotychczasowy watchdog z rosnącym backoffem.
+            if (kodWyjscia == 0)
+            {
+                Log.Information("Board: kiosk na {MonitorId} zamknięty ręcznie (exit code 0) - nie uruchamiam ponownie automatycznie.", monitor.Id);
+                instancja.ZamknietyRecznie = true;
+                instancja.StatusText = $"zamknięta ręcznie na {monitor.DisplayLabel ?? monitor.Id} (zmień konfigurację, żeby wznowić)";
+                return;
+            }
+
+            Log.Information("Board: proces kiosku na {MonitorId} zakończył się nieoczekiwanie (kod {KodWyjscia}) - watchdog zaplanuje restart.", monitor.Id, kodWyjscia);
             ZaplanujKolejnaProbe(instancja);
         }
 
@@ -182,6 +216,7 @@ public sealed class KioskSupervisor : IDisposable
         instancja.Proces = proces;
         instancja.ProcesUruchomionyUtc = DateTime.UtcNow;
         instancja.NastepnaProbaUtc = null;
+        instancja.OstatniBoardUrl = config.BoardUrl;
         instancja.StatusText = $"uruchomiono na {monitor.DisplayLabel ?? monitor.Id}";
         Log.Information("Board: uruchomiono kiosk (PID {Pid}) na monitorze {MonitorId} ({W}x{H} @ {X},{Y}).",
             proces.Id, monitor.Id, monitor.WidthPx, monitor.HeightPx, monitor.PositionX, monitor.PositionY);
