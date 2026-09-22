@@ -1,76 +1,75 @@
-using XKantor.LocalAgent.Core.Configuration;
-
 namespace XKantor.LocalAgent.Board;
 
 // Warstwa logiki nad BoardConfigStore - waliduje, co przeglądarka próbuje zapisać (patrz
 // Api/Endpoints/BoardEndpoints.cs), trzyma świeży stan w pamięci (żeby GET i pipe do
 // UserSession - patrz Board/Ipc/BoardConfigPipeServer.cs - nie musiały czytać pliku za każdym
-// razem).
+// razem). Stanowisko może mieć KILKA wpisów naraz (jeden na monitor) - Upsert dodaje/aktualizuje/
+// usuwa TYLKO wpis dla jednego, wskazanego MonitorStableId, reszta listy zostaje nietknięta.
 public sealed class BoardService
 {
     private readonly BoardConfigStore _store;
-    private readonly AgentConfig _agentConfig;
     private readonly object _blokada = new();
-    private BoardConfig _biezacy;
+    private List<BoardConfig> _biezace;
 
-    public BoardService(BoardConfigStore store, AgentConfig agentConfig)
+    public BoardService(BoardConfigStore store)
     {
         _store = store;
-        _agentConfig = agentConfig;
-        _biezacy = _store.ZaladujLubUtworz();
+        _biezace = _store.ZaladujLubUtworz();
     }
 
-    public BoardConfig GetConfig()
+    public IReadOnlyList<BoardConfig> GetConfigs()
     {
         lock (_blokada)
         {
-            return _biezacy;
+            return _biezace;
         }
     }
 
-    public (bool CzySukces, string? Blad) Update(bool enabled, string? monitorStableId, string? monitorLabel, string? boardUrl)
+    public (bool CzySukces, string? Blad) Upsert(string monitorStableId, bool enabled, string? monitorLabel, string? boardUrl)
     {
+        if (string.IsNullOrWhiteSpace(monitorStableId))
+        {
+            return (false, "Brak wybranego monitora.");
+        }
+
         if (enabled)
         {
-            if (string.IsNullOrWhiteSpace(monitorStableId))
+            if (string.IsNullOrWhiteSpace(boardUrl) || !Uri.TryCreate(boardUrl, UriKind.Absolute, out var uri)
+                || (uri.Scheme != Uri.UriSchemeHttp && uri.Scheme != Uri.UriSchemeHttps))
             {
-                return (false, "Brak wybranego monitora.");
+                return (false, "Nieprawidłowy adres tablicy (wymagany pełny adres http(s)://...).");
             }
 
-            if (string.IsNullOrWhiteSpace(boardUrl) || !Uri.TryCreate(boardUrl, UriKind.Absolute, out var uri))
-            {
-                return (false, "Nieprawidłowy adres tablicy.");
-            }
-
-            // Agent nigdy nie uruchamia kiosku pod dowolny adres podany przez przeglądarkę -
-            // ten sam wzorzec zaufania co OriginValidationMiddleware (AgentConfig.AllowedOrigins).
-            if (!CzyDozwolonyOrigin(uri))
-            {
-                return (false, "Adres tablicy spoza dozwolonej listy originów tego stanowiska.");
-            }
+            // ZMIANA (zadanie "WIDOK TABLICY", sekcja 3/7 - widoki typu URL, np. YouTube): dawniej
+            // wymagaliśmy, żeby BoardUrl należał do AgentConfig.AllowedOrigins (ten sam wzorzec co
+            // OriginValidationMiddleware) - to celowo uniemożliwiało kiosk pod DOWOLNYM adresem.
+            // Teraz kantorApp ma jawny katalog "widoków" i administrator MOŻE świadomie wskazać
+            // zewnętrzny URL - to już nie przypadkowy/nieautoryzowany adres z przeglądarki, tylko
+            // intencjonalny wybór w panelu admina. Prawdziwą granicą zaufania jest sam token sesji
+            // wymagany przez ten endpoint (scope "display", RequireSessionScope w BoardEndpoints.cs)
+            // - wymaga wcześniejszego sparowania stanowiska (StationSecret), więc origin-allowlist
+            // nie dawał tu dodatkowego bezpieczeństwa, tylko blokował zamierzoną funkcję.
         }
-
-        var nowy = new BoardConfig
-        {
-            Enabled = enabled,
-            MonitorStableId = enabled ? monitorStableId : null,
-            MonitorLabel = enabled ? monitorLabel : null,
-            BoardUrl = enabled ? boardUrl : null,
-            ConfiguredAtUtc = DateTimeOffset.UtcNow
-        };
 
         lock (_blokada)
         {
-            _biezacy = nowy;
+            var nowa = _biezace.Where(c => c.MonitorStableId != monitorStableId).ToList();
+            if (enabled)
+            {
+                nowa.Add(new BoardConfig
+                {
+                    Enabled = true,
+                    MonitorStableId = monitorStableId,
+                    MonitorLabel = monitorLabel,
+                    BoardUrl = boardUrl,
+                    ConfiguredAtUtc = DateTimeOffset.UtcNow
+                });
+            }
+
+            _biezace = nowa;
+            _store.Zapisz(_biezace);
         }
 
-        _store.Zapisz(nowy);
         return (true, null);
-    }
-
-    private bool CzyDozwolonyOrigin(Uri uri)
-    {
-        var origin = $"{uri.Scheme}://{uri.Authority}";
-        return _agentConfig.AllowedOrigins.Any(o => string.Equals(o.TrimEnd('/'), origin, StringComparison.OrdinalIgnoreCase));
     }
 }

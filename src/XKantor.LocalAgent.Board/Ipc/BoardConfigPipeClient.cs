@@ -11,7 +11,7 @@ public static class BoardConfigPipeClient
 {
     private const string ZapytanieGet = "GET_BOARD_CONFIG";
 
-    public static async Task<BoardConfig?> PobierzAsync(CancellationToken ct, int timeoutMs = 2000)
+    public static async Task<List<BoardConfig>?> PobierzAsync(CancellationToken ct, int timeoutMs = 2000)
     {
         try
         {
@@ -23,7 +23,7 @@ public static class BoardConfigPipeClient
 
             using var reader = new StreamReader(pipe, leaveOpen: true);
             var linia = await reader.ReadLineAsync(ct);
-            return string.IsNullOrWhiteSpace(linia) ? null : JsonSerializer.Deserialize<BoardConfig>(linia);
+            return string.IsNullOrWhiteSpace(linia) ? null : JsonSerializer.Deserialize<List<BoardConfig>>(linia);
         }
         catch (Exception)
         {
