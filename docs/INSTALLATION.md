@@ -50,6 +50,12 @@ Wynik: `installer\Output\XKantor-Local-Agent-Setup.exe`.
 
 ## Co robi instalator (`installer/XKantorLocalAgent.iss`)
 
+0. **Przy aktualizacji** (usługa/UserSession.exe już działają z poprzedniej instalacji):
+   `PrepareToInstall` w `[Code]` najpierw zabija `XKantor.LocalAgent.UserSession.exe` i
+   zatrzymuje usługę `XKantorLocalAgent` (aktywne czekanie do 15s aż faktycznie przejdzie w stan
+   Stopped) - dopiero potem instalator dotyka plików. Bez tego kroku pliki `.exe`/`.dll` są
+   zablokowane przez działający proces i instalator pyta Retry/Abort/Ignore albo cicho pomija
+   nadpisanie pliku.
 1. Kopiuje pliki opublikowane w kroku 1 do `{autopf}\XKantorLocalAgent`.
 2. Rejestruje `XKantor.LocalAgent.Service.exe` jako usługę Windows (`XKantorLocalAgent`,
    autostart) - `sc.exe create` w sekcji `[Run]`.
