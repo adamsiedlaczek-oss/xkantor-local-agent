@@ -11,33 +11,30 @@ public sealed class MonitorsModule : IAgentModule
     private static readonly TimeSpan MaksymalnyWiekRaportu = TimeSpan.FromSeconds(60);
 
     private readonly MonitorCache _cache;
-    private readonly MonitorDiscoveryService _fallbackDiscovery;
 
-    public MonitorsModule(MonitorCache cache, MonitorDiscoveryService fallbackDiscovery)
+    public MonitorsModule(MonitorCache cache)
     {
         _cache = cache;
-        _fallbackDiscovery = fallbackDiscovery;
     }
 
     public string Name => "Monitors";
 
     public IReadOnlyList<MonitorInfo> GetMonitors()
     {
-        if (_cache.TryGetFresh(MaksymalnyWiekRaportu, out var zRaportu) && zRaportu.Count > 0)
-        {
-            return zRaportu;
-        }
-
-        // Best-effort w procesie usługi (Session 0) - patrz ograniczenie opisane w
-        // MonitorDiscoveryService.cs. Może zwrócić pustą listę, dopóki UserSession nie
-        // podłączy się i nie przyśle prawdziwego raportu z sesji interaktywnej.
-        return _fallbackDiscovery.Wykryj();
+        // WCZEŚNIEJ było tu wywoływane MonitorDiscoveryService.Wykryj() usługi jako "best-effort
+        // fallback" - ale usługa działa w Session 0 (patrz MonitorDiscoveryService.cs), gdzie
+        // Screen.AllScreens NIE zwraca pustej listy, tylko SYNTETYCZNY pulpit Session 0 - w
+        // praktyce dokładnie JEDEN fikcyjny ekran 1024x768 ("FALLBACK:MONITOR1" po przejściu
+        // przez MonitorStableIdResolver, bo nie ma EDID/interfejsu do rozpoznania). To myląco
+        // wyglądało jak prawdziwy, wykryty monitor operatora zamiast jasno sygnalizować "UserSession
+        // jeszcze się nie podłączył". Jedyne wiarygodne źródło to raport z UserSession przez pipe
+        // (MonitorPipeServer/MonitorCache) - bez świeżego raportu zwracamy pustą listę.
+        return _cache.TryGetFresh(MaksymalnyWiekRaportu, out var zRaportu) ? zRaportu : Array.Empty<MonitorInfo>();
     }
 
     public Task<ModuleStatus> GetStatusAsync(CancellationToken ct = default)
     {
         var monitory = GetMonitors();
-        var zRaportuUserSession = _cache.TryGetFresh(MaksymalnyWiekRaportu, out _);
 
         if (monitory.Count == 0)
         {
@@ -45,16 +42,15 @@ public sealed class MonitorsModule : IAgentModule
             {
                 Name = Name,
                 State = ModuleState.NotConfigured,
-                Details = "Brak wykrytych monitorów - komponent XKantor.LocalAgent.UserSession prawdopodobnie nie jest uruchomiony w sesji operatora."
+                Details = "Brak wykrytych monitorów - komponent XKantor.LocalAgent.UserSession prawdopodobnie nie jest uruchomiony w sesji operatora (albo jeszcze nie przesłał pierwszego raportu - do 20s po starcie)."
             });
         }
 
-        var zrodlo = zRaportuUserSession ? "UserSession" : "wykrywanie w procesie usługi (Session 0)";
         return Task.FromResult(new ModuleStatus
         {
             Name = Name,
             State = ModuleState.Ready,
-            Details = $"{monitory.Count} monitorów wykrytych (źródło: {zrodlo})."
+            Details = $"{monitory.Count} monitorów wykrytych (źródło: UserSession)."
         });
     }
 }

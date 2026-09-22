@@ -34,7 +34,6 @@ public static class ApiExtensions
 
         services.AddSingleton<DeviceDiscoveryService>();
         services.AddSingleton<MonitorCache>();
-        services.AddSingleton<MonitorDiscoveryService>();
         services.AddSingleton<MonitorsModule>();
         services.AddSingleton<MonitorPipeServer>();
         services.AddSingleton<CurrencyDisplayService>();

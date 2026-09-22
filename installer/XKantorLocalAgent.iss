@@ -51,6 +51,14 @@ Filename: "sc.exe"; Parameters: "start {#MyServiceName}"; Flags: runhidden waitu
 ; docs/DECISIONS.md #9 - detekcja monitorow wymaga interaktywnej sesji).
 Filename: "schtasks.exe"; Parameters: "/create /tn ""{#MyTaskName}"" /tr ""\""{app}\UserSession\{#MyUserSessionExeName}\"""" /sc onlogon /rl limited /f"; Flags: runhidden waituntilterminated
 
+; Zadanie "/sc onlogon" uruchomi UserSession.exe dopiero przy NASTĘPNYM logowaniu - jeśli
+; operator jest zalogowany JUŻ TERAZ (typowy przypadek: instalator odpalony w jego własnej
+; sesji), komponent bez tego wpisu w ogóle by nie wystartował aż do wylogowania/restartu, a
+; usługa w Session 0 zwraca wtedy mylący "FALLBACK:MONITOR1" 1024x768 zamiast prawdziwych
+; monitorów operatora (patrz MonitorsModule.cs). "runasoriginaluser" zdejmuje podniesienie UAC
+; instalatora (PrivilegesRequired=admin) - uruchamiamy jako zwykły, niepodniesiony operator.
+Filename: "{app}\UserSession\{#MyUserSessionExeName}"; Flags: nowait runasoriginaluser
+
 [UninstallRun]
 ; Zamknij komponent sesji uzytkownika PRZED zatrzymaniem uslugi/usunieciem zadania - inaczej
 ; proces moze wciaz trzymac otwarty uchwyt do UserSession.exe podczas usuwania plikow (patrz
